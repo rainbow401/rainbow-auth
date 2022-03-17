@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <springProperty scope="context" name="appName" source="spring.application.name"/>
+    <springProperty scope="context" name="env" source="spring.profiles.active"/>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <!--格式化输出：%d表示日期，%thread表示线程名，%-5level：级别从左显示5个字符宽度%msg：日志消息，%n是换行符 -->
+            <pattern>%boldWhite(%d{yyyy-MM-dd HH:mm:ss.SSS})|%boldRed(${appName})|%boldGreen(${env})|%highlight(%-5level)|%boldYellow(%thread)|%cyan(%C:%M:%L)| - %boldMagenta(%msg%n)</pattern>
+        </encoder>
+    </appender>
+
+    <!--异步将日志输出到控制台-->
+    <appender name="ASYNC" class="ch.qos.logback.classic.AsyncAppender">
+        <discardingThreshold>0</discardingThreshold>
+        <queueSize>256</queueSize>
+        <includeCallerData>true</includeCallerData>
+        <appender-ref ref="STDOUT"/>
+    </appender>
+
+    <!--配置日志文件(File)-->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!--设置策略-->
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!--日志文件路径：这里%d{yyyyMMdd}表示按天分类日志-->
+            <FileNamePattern>logs/${appName}-%d{yyyy-MM-dd}.log</FileNamePattern>
+            <!--日志保留天数-->
+            <MaxHistory>30</MaxHistory>
+        </rollingPolicy>
+        <!--设置格式-->
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <!--格式化输出：%d表示日期，%thread表示线程名，%-5level：级别从左显示5个字符宽度%msg：日志消息，%n是换行符-->
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS}|${appName}|${env}|%-5level|%thread|%C:%M:%L| - %msg%n</pattern>
+            <charset>utf8</charset>
+        </encoder>
+        <!--日志文件最大的大小-->
+        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+            <MaxFileSize>100MB</MaxFileSize>
+        </triggeringPolicy>
+    </appender>
+
+
+    <root level="info">
+        <appender-ref ref="ASYNC"/>
+        <appender-ref ref="FILE"/>
+    </root>
+    <logger name="com.practice" additivity="false" level="info">
+        <appender-ref ref="STDOUT"/>
+    </logger>
+
+    <!--打印sql日志-->
+    <logger name="com.practice.mapper" level="debug"/>
+
+</configuration>
