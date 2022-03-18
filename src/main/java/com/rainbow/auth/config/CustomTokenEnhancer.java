@@ -1,5 +1,7 @@
 package com.rainbow.auth.config;
 
+import com.rainbow.auth.common.TokenConstant;
+import com.rainbow.auth.entity.SecurityUser;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.common.DefaultOAuth2AccessToken;
 import org.springframework.security.oauth2.common.OAuth2AccessToken;
@@ -7,6 +9,7 @@ import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.security.oauth2.provider.token.TokenEnhancer;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class CustomTokenEnhancer implements TokenEnhancer {

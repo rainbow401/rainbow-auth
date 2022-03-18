@@ -1,5 +1,6 @@
 package com.rainbow.auth.config;
 
+import com.rainbow.auth.service.UserDetailServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -35,6 +36,9 @@ public class OAuth2ServerConfiguration extends AuthorizationServerConfigurerAdap
 
     @Autowired
     private AuthenticationManager authenticationManager;
+
+    @Autowired
+    private UserDetailServiceImpl userDetailService;
 
     /**
      * 我们配置了使用数据库来维护客户端信息。虽然在各种Demo中我们经常看到的是在内存中维护客户端信息，通过配置直接写死在这里。
@@ -79,7 +83,8 @@ public class OAuth2ServerConfiguration extends AuthorizationServerConfigurerAdap
                 .authorizationCodeServices(authorizationCodeServices())
                 .tokenStore(tokenStore())
                 .tokenEnhancer(tokenEnhancerChain)
-                .authenticationManager(authenticationManager);
+                .authenticationManager(authenticationManager)
+                .userDetailsService(userDetailService);
     }
 
     /**
@@ -131,9 +136,9 @@ public class OAuth2ServerConfiguration extends AuthorizationServerConfigurerAdap
         return converter;
     }
 
-    /**
-     * 配置登录页面的视图信息（其实可以独立一个配置类更规范）
-     */
+//    /**
+//     * 配置登录页面的视图信息（其实可以独立一个配置类更规范）
+//     */
 //    @Configuration
 //    static class MvcConfig implements WebMvcConfigurer {
 //        @Override
@@ -141,4 +146,6 @@ public class OAuth2ServerConfiguration extends AuthorizationServerConfigurerAdap
 //            registry.addViewController("login").setViewName("login");
 //        }
 //    }
+
+
 }
