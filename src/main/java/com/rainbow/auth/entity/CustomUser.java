@@ -19,7 +19,7 @@ import java.util.Collection;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class SecurityUser implements UserDetails {
+public class CustomUser implements UserDetails {
 
     private String userId;
 

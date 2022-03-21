@@ -49,5 +49,9 @@
 
     <!--打印sql日志-->
     <logger name="com.practice.mapper" level="debug"/>
+    <include resource="org/springframework/boot/logging/logback/base.xml"/>
 
+    <!--显示日志-->
+    <logger name="org.springframework.jdbc.core" level="DEBUG" >
+    </logger>
 </configuration>
