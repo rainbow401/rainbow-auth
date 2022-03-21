@@ -80,15 +80,16 @@ public class OAuth2ServerConfiguration extends AuthorizationServerConfigurerAdap
      */
     @Override
     public void configure(AuthorizationServerEndpointsConfigurer endpoints) {
-        //配置端点
-        endpoints
-                .approvalStore(approvalStore())
+        TokenEnhancerChain tokenEnhancerChain = new TokenEnhancerChain();
+        tokenEnhancerChain.setTokenEnhancers(
+                Arrays.asList(tokenEnhancer(), accessTokenConverter()));
+
+        endpoints.approvalStore(approvalStore())
                 .authorizationCodeServices(authorizationCodeServices())
-                .tokenServices(tokenServices())
-                .authenticationManager(authenticationManager)
-                .userDetailsService(customUserDetailService)
                 .tokenStore(tokenStore())
-                .tokenEnhancer(tokenEnhancer());
+                .tokenEnhancer(tokenEnhancerChain)
+                .authenticationManager(authenticationManager)
+                .userDetailsService(customUserDetailService);
     }
 
 

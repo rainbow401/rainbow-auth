@@ -25,6 +25,6 @@ public class CustomUserDetailServiceImpl implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 
-        return jdbcTemplate.queryForObject("select * from users where username = '" + username + "'", new BeanPropertyRowMapper<>(SecurityUser.class));
+        return jdbcTemplate.queryForObject("select username, user_id, enabled, password from users where username = ?", new Object[]{username}, new BeanPropertyRowMapper<>(SecurityUser.class));
     }
 }
