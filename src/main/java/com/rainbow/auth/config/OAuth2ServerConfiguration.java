@@ -1,6 +1,6 @@
 package com.rainbow.auth.config;
 
-import com.rainbow.auth.service.UserDetailServiceImpl;
+import com.rainbow.auth.service.CustomUserDetailServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,23 +12,20 @@ import org.springframework.security.oauth2.config.annotation.web.configuration.A
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableAuthorizationServer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerEndpointsConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerSecurityConfigurer;
+import org.springframework.security.oauth2.provider.ClientDetailsService;
 import org.springframework.security.oauth2.provider.approval.JdbcApprovalStore;
 import org.springframework.security.oauth2.provider.code.AuthorizationCodeServices;
 import org.springframework.security.oauth2.provider.code.JdbcAuthorizationCodeServices;
-import org.springframework.security.oauth2.provider.token.TokenEnhancer;
-import org.springframework.security.oauth2.provider.token.TokenEnhancerChain;
-import org.springframework.security.oauth2.provider.token.TokenStore;
+import org.springframework.security.oauth2.provider.token.*;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
 import org.springframework.security.oauth2.provider.token.store.KeyStoreKeyFactory;
-import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import javax.sql.DataSource;
 import java.util.Arrays;
 
 @Configuration
-@EnableAuthorizationServer //开启授权服务器
+@EnableAuthorizationServer
 public class OAuth2ServerConfiguration extends AuthorizationServerConfigurerAdapter {
 
     @Autowired
@@ -38,9 +35,23 @@ public class OAuth2ServerConfiguration extends AuthorizationServerConfigurerAdap
     private AuthenticationManager authenticationManager;
 
     @Autowired
-    private UserDetailServiceImpl userDetailService;
+    private CustomUserDetailServiceImpl customUserDetailService;
+
+    @Autowired
+    private TokenStore tokenStore;
+
+    @Autowired
+    private ClientDetailsService clientDetailsService;
+
+    @Autowired
+    private CustomTokenEnhancer customTokenEnhancer;
+
+    @Autowired
+    private JwtAccessTokenConverter jwtAccessTokenConverter;
 
     /**
+     * 客户端数据源配置
+     *
      * 我们配置了使用数据库来维护客户端信息。虽然在各种Demo中我们经常看到的是在内存中维护客户端信息，通过配置直接写死在这里。
      * 但是，对于实际的应用我们一般都会用数据库来维护这个信息，甚至还会建立一套工作流来允许客户端自己申请ClientID。
      * @param clients
@@ -75,16 +86,26 @@ public class OAuth2ServerConfiguration extends AuthorizationServerConfigurerAdap
      */
     @Override
     public void configure(AuthorizationServerEndpointsConfigurer endpoints) {
-        TokenEnhancerChain tokenEnhancerChain = new TokenEnhancerChain();
-        tokenEnhancerChain.setTokenEnhancers(
-                Arrays.asList(tokenEnhancer(), jwtTokenEnhancer()));
 
+        //配置端点
         endpoints.approvalStore(approvalStore())
                 .authorizationCodeServices(authorizationCodeServices())
-                .tokenStore(tokenStore())
-                .tokenEnhancer(tokenEnhancerChain)
                 .authenticationManager(authenticationManager)
-                .userDetailsService(userDetailService);
+                .tokenServices(tokenServices());
+    }
+
+
+    @Bean
+    public AuthorizationServerTokenServices tokenServices(){
+        DefaultTokenServices services = new DefaultTokenServices();
+        services.setClientDetailsService(clientDetailsService);
+        services.setSupportRefreshToken(true);
+        services.setTokenStore(tokenStore());
+
+        TokenEnhancerChain tokenEnhancerChain = new TokenEnhancerChain();
+        tokenEnhancerChain.setTokenEnhancers(Arrays.asList(customTokenEnhancer, accessTokenConverter()));
+        services.setTokenEnhancer(tokenEnhancerChain);
+        return services;
     }
 
     /**
@@ -103,7 +124,7 @@ public class OAuth2ServerConfiguration extends AuthorizationServerConfigurerAdap
      */
     @Bean
     public TokenStore tokenStore() {
-        return new JwtTokenStore(jwtTokenEnhancer());
+        return new JwtTokenStore(accessTokenConverter());
     }
 
     /**
@@ -116,6 +137,9 @@ public class OAuth2ServerConfiguration extends AuthorizationServerConfigurerAdap
     }
 
     /**
+     *
+     * token增强器
+     *
      * 自定义的Token增强器，把更多信息放入Token中
      * @return
      */
@@ -124,28 +148,32 @@ public class OAuth2ServerConfiguration extends AuthorizationServerConfigurerAdap
         return new CustomTokenEnhancer();
     }
 
+
     /**
+     * 验证token配置
+     *
      * 配置JWT令牌使用非对称加密方式来验证
      * @return
      */
     @Bean
-    protected JwtAccessTokenConverter jwtTokenEnhancer() {
-        KeyStoreKeyFactory keyStoreKeyFactory = new KeyStoreKeyFactory(new ClassPathResource("jwt.jks"), "mySecretKey".toCharArray());
+    protected JwtAccessTokenConverter accessTokenConverter() {
         JwtAccessTokenConverter converter = new JwtAccessTokenConverter();
+
+        //设置密钥
+        KeyStoreKeyFactory keyStoreKeyFactory = new KeyStoreKeyFactory(new ClassPathResource("jwt.jks"), "mySecretKey".toCharArray());
         converter.setKeyPair(keyStoreKeyFactory.getKeyPair("jwt"));
+
+        DefaultAccessTokenConverter tokenConverter = new DefaultAccessTokenConverter();
+
+        DefaultUserAuthenticationConverter userTokenConverter = new DefaultUserAuthenticationConverter();
+        userTokenConverter.setUserDetailsService(customUserDetailService);
+
+        tokenConverter.setUserTokenConverter(userTokenConverter);
+
+        converter.setAccessTokenConverter(tokenConverter);
+
         return converter;
     }
-
-//    /**
-//     * 配置登录页面的视图信息（其实可以独立一个配置类更规范）
-//     */
-//    @Configuration
-//    static class MvcConfig implements WebMvcConfigurer {
-//        @Override
-//        public void addViewControllers(ViewControllerRegistry registry) {
-//            registry.addViewController("login").setViewName("login");
-//        }
-//    }
 
 
 }
