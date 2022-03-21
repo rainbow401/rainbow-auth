@@ -25,25 +25,12 @@ public class CustomTokenEnhancer implements TokenEnhancer {
     @Override
     public OAuth2AccessToken enhance(OAuth2AccessToken accessToken, OAuth2Authentication authentication) {
         Authentication userAuthentication = authentication.getUserAuthentication();
+        accessToken.getAdditionalInformation();
         if (userAuthentication != null) {
             Object principal = authentication.getUserAuthentication().getPrincipal();
-            try {
-                String s = objectMapper.writeValueAsString(principal);
-                Map<String,Object> map = objectMapper.readValue(s, new TypeReference<Map<String,Object>>(){});
-                //把用户标识以userDetails这个Key加入到JWT的额外信息中去
-                map.remove("password");
-                map.remove("authorities");
-                map.remove("accountNonExpired");
-                map.remove("accountNonLocked");
-                map.remove("credentialsNonExpired");
-                map.remove("enabled");
-                Map<String, Object> additionalInfo = new HashMap<>();
-                additionalInfo.put("user_info", map);
-                ((DefaultOAuth2AccessToken) accessToken).setAdditionalInformation(additionalInfo);
-            } catch (JsonProcessingException e) {
-                e.printStackTrace();
-            }
-
+            Map<String, Object> additionalInfo = new HashMap<>();
+            additionalInfo.put("user_info", principal);
+            ((DefaultOAuth2AccessToken) accessToken).setAdditionalInformation(additionalInfo);
         }
         return accessToken;
     }

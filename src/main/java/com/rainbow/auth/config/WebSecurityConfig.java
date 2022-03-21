@@ -49,18 +49,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
      */
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-//        http
-//                .authorizeRequests()
-//                .antMatchers("/login", "/oauth/authorize")
-//                .permitAll()
-//                .anyRequest().authenticated()
-//                .and()
-//                .formLogin().loginPage("/login");
-
         http
-                //注入自定义的授权配置类
-//                .apply(smsCodeSecurityConfig)
-//                .and()
                 .authorizeRequests()
                 //注销的接口需要放行
                 .antMatchers("/oauth/logout").permitAll()

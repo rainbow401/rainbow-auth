@@ -38,16 +38,10 @@ public class OAuth2ServerConfiguration extends AuthorizationServerConfigurerAdap
     private CustomUserDetailServiceImpl customUserDetailService;
 
     @Autowired
-    private TokenStore tokenStore;
-
-    @Autowired
     private ClientDetailsService clientDetailsService;
 
     @Autowired
     private CustomTokenEnhancer customTokenEnhancer;
-
-    @Autowired
-    private JwtAccessTokenConverter jwtAccessTokenConverter;
 
     /**
      * 客户端数据源配置
@@ -86,12 +80,15 @@ public class OAuth2ServerConfiguration extends AuthorizationServerConfigurerAdap
      */
     @Override
     public void configure(AuthorizationServerEndpointsConfigurer endpoints) {
-
         //配置端点
-        endpoints.approvalStore(approvalStore())
+        endpoints
+                .approvalStore(approvalStore())
                 .authorizationCodeServices(authorizationCodeServices())
+                .tokenServices(tokenServices())
                 .authenticationManager(authenticationManager)
-                .tokenServices(tokenServices());
+                .userDetailsService(customUserDetailService)
+                .tokenStore(tokenStore())
+                .tokenEnhancer(tokenEnhancer());
     }
 
 
@@ -120,7 +117,6 @@ public class OAuth2ServerConfiguration extends AuthorizationServerConfigurerAdap
 
     /**
      * 使用JWT令牌存储
-     * @return
      */
     @Bean
     public TokenStore tokenStore() {
@@ -129,7 +125,6 @@ public class OAuth2ServerConfiguration extends AuthorizationServerConfigurerAdap
 
     /**
      * 使用JDBC数据库方式来保存用户的授权批准记录
-     * @return
      */
     @Bean
     public JdbcApprovalStore approvalStore() {
@@ -153,7 +148,6 @@ public class OAuth2ServerConfiguration extends AuthorizationServerConfigurerAdap
      * 验证token配置
      *
      * 配置JWT令牌使用非对称加密方式来验证
-     * @return
      */
     @Bean
     protected JwtAccessTokenConverter accessTokenConverter() {
